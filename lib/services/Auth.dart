@@ -5,6 +5,7 @@ import 'package:firebase_core/firebase_core.dart';
 
 class AuthMethod{
   final FirebaseAuth _auth;
+  // final User user;
 
   //condition of user exist or not. true : false
   // User _userFromFirebaseUser(FirebaseUser user){
@@ -51,22 +52,22 @@ class AuthMethod{
     }
   }
 
-Future<String> RegsiterEmailAndPassword(String email, String password) async{
-  try {
-    UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: email,
-        password: password
-    );
-  } on FirebaseAuthException catch (e) {
-    if (e.code == 'weak-password') {
-      print('The password provided is too weak.');
-    } else if (e.code == 'email-already-in-use') {
-      print('The account already exists for that email.');
+  static Future<FirebaseAuth> login(String email, String password) async{
+    try{
+
+    }catch(e){
+
     }
-  } catch (e) {
-    print(e);
   }
-}
+
+// Future<FirebaseAuth> RegsiterEmailAndPassword(String email, String password) async{
+//   try {
+//     _auth.createUserWithEmailAndPassword(email: email, password: password).then((value) => user.sendEmailVerification() );
+//   } catch (e) {
+//     print(e.toString());
+//     return null;
+//   }
+// }
 
   Future resetPass(String email) async{
     try{

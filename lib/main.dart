@@ -3,8 +3,9 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:new_project/services/Auth.dart';
 import 'package:new_project/services/Authenticate.dart';
-import 'package:new_project/view/chatRoomsPage.dart';
+import 'package:new_project/view/chatRoomPage.dart';
 import 'package:provider/provider.dart';
+import 'package:splashscreen/splashscreen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -12,8 +13,19 @@ void main() async {
   runApp(MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   // This widget is the root of your application.
+  @override
+  _MyAppState createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
@@ -32,7 +44,7 @@ class MyApp extends StatelessWidget {
           scaffoldBackgroundColor: Color(0xff1b2430),
           visualDensity: VisualDensity.adaptivePlatformDensity,
         ),
-        home: Cek(),
+        home: SplashScreenPage(),
 
       ),
     );
@@ -48,12 +60,28 @@ class Cek extends StatelessWidget {
   Widget build(BuildContext context) {
     final firebaseUser = context.watch<User>();
     if(firebaseUser != null){
-      return ChatRoom();
+      return ChatRoomPage();
     }else{
       return Authenticate();
     }
   }
 }
 
-
+class SplashScreenPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    AssetImage assetImage = AssetImage('Assets/Image/logo_transparent.png');
+    Image image = Image(image: assetImage);
+    return Scaffold(
+      body: SplashScreen(
+        seconds: 5,
+        navigateAfterSeconds: new Cek(),
+        backgroundColor:  Color(0xff1b2430),
+        title: new Text('by Zain', style: TextStyle(fontSize: 20, color: Color(0xff341199)),),
+        image: image,
+        photoSize: 100.0,
+      ),
+    );
+  }
+}
 

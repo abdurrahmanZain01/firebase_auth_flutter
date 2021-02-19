@@ -1,11 +1,18 @@
+import 'dart:async';
+import 'dart:math';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:new_project/services/Auth.dart';
-import 'package:new_project/view/chatRoomsPage.dart';
-import 'package:new_project/view/conversationPage.dart';
+import 'package:new_project/services/Helper.dart';
+import 'package:new_project/services/database.dart';
+import 'package:new_project/view/searchPage.dart';
+import 'package:new_project/view/signin.dart';
 import 'package:new_project/widgets/widget.dart';
 import 'package:flutter/cupertino.dart';
+
 
 class SignUp extends StatefulWidget {
   final Function toggle;
@@ -17,28 +24,64 @@ class SignUp extends StatefulWidget {
 }
 
 class _SignUpState extends State<SignUp> {
+  String username, email, phone, nama;
   bool isLoading = false;
-
+  User user;
+  FirebaseAuth auth = FirebaseAuth.instance;
   AuthMethod _authMethod = new AuthMethod(FirebaseAuth.instance);
+  DatabaseMethods database = new DatabaseMethods();
+  QuerySnapshot querySnapshot;
+  var queryResultSet = [];
+  var tempSearchStore = [];
+  DatabaseMethods databaseMethod = new DatabaseMethods();
+
+  Stream chatRoomStream;
 
   final formKey = GlobalKey<FormState>();
-  TextEditingController UsernameController = new TextEditingController();
-  TextEditingController PhoneNumberController = new TextEditingController();
-  TextEditingController EmailController = new TextEditingController();
-  TextEditingController PasswordController = new TextEditingController();
+  TextEditingController usernameController = new TextEditingController();
+  TextEditingController phoneNumberController = new TextEditingController();
+  TextEditingController emailController = new TextEditingController();
+  TextEditingController passwordController = new TextEditingController();
 
-  signMeUp(){
+  signMeUp() async{
     if(formKey.currentState.validate()){
+      Map<String,String> mapUserInfo = {
+        "username" : usernameController.text,
+        "phoneNumber" : phoneNumberController.text,
+        "email" : emailController.text
+      };
+      
+      HelperFunctions.saveUsernameSharedpreferences(usernameController.text);
+      HelperFunctions.saveUserEmailSharedpreferences(emailController.text);
+      try{
+        await auth.createUserWithEmailAndPassword(email: emailController.text, password: passwordController.text).then((value) => {
+        HelperFunctions.saveUserLoggedInSharedpreferences(true),
+        database.uploadUserInfo(mapUserInfo),
         setState(() {
           isLoading = true;
+        }),
+        Navigator.pushReplacement(context, MaterialPageRoute(
+            builder: (context) => VerifyScreen())),
         });
-        _authMethod.RegsiterEmailAndPassword(EmailController.text, PasswordController.text).then((val){
-            // print("${val.uid}");
-            Navigator.pushReplacement(context, MaterialPageRoute(
-                builder: (context) => ChatRoom()));
-        });
+      }on FirebaseAuthException catch(e){
+        Fluttertoast.showToast(msg: "email has already taken", toastLength: Toast.LENGTH_LONG);
+      }catch (e){
+        print("this is your error" + e.toString());
+      }
     }
   }
+
+  getUserCredentials()async{
+    databaseMethod.checkUsername(usernameController.text, emailController.text,
+        phoneNumberController.text).then((value){
+       setState(() {
+         chatRoomStream = value;
+         print("ini dia $value");
+       });
+    });
+  }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -58,21 +101,33 @@ class _SignUpState extends State<SignUp> {
                   key: formKey,
                   child: Column(
                     children: <Widget>[
-                      TextFormField(
-                        validator: (val){
-                          return val.isEmpty || val.length < 2 ?
-                          "pleade provide a valid username" : null;
-                        },
-                          controller: UsernameController,
-                          style: simpleTextFieldDecoration(),
-                          decoration: textFieldDecoration("Username")
+                      Row(
+                        children: <Widget>[
+                          Expanded(
+                            child: Container(
+                              child: TextFormField(
+                                  validator: (val){
+                                    return val.isEmpty || val.length < 2 ?
+                                    "please provide a valid username" : null;
+                                  },
+                                  controller: usernameController,
+                                  style: simpleTextFieldDecoration(),
+                                  decoration: textFieldDecoration("Username")
+                              ),
+                            ),
+                          ),
+                          // GestureDetector(
+                          //   onTap: initiateSearch(),
+                          // )
+                        ],
+
                       ),
                       TextFormField(
                         validator: (val){
                           return val.isEmpty || val.length < 10 ?
                               "please privide a correct phone number" : null;
                         },
-                          controller: PhoneNumberController,
+                          controller: phoneNumberController,
                           style: simpleTextFieldDecoration(),
                           decoration: textFieldDecoration("Phone Number")
                       ),
@@ -81,7 +136,7 @@ class _SignUpState extends State<SignUp> {
                           return RegExp(r"^[a-zA-z0-9.a-zA-z0-9.!#$%&'*+-/=?^_'{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+")
                               .hasMatch(val) ? null : "Please Enter Correct Email";
                         },
-                          controller: EmailController,
+                          controller: emailController,
                           style: simpleTextFieldDecoration(),
                           decoration: textFieldDecoration("Email")
                       ),
@@ -90,7 +145,7 @@ class _SignUpState extends State<SignUp> {
                           validator: (val){
                             return val.length > 6 ? null : "Please provide password more than 6 characters";
                           },
-                          controller: PasswordController,
+                          controller: passwordController,
                           style: simpleTextFieldDecoration(),
                           decoration: textFieldDecoration("Password")
                       ),
@@ -102,6 +157,7 @@ class _SignUpState extends State<SignUp> {
                 ),
                 GestureDetector(
                   onTap: (){
+                    getUserCredentials();
                     signMeUp();
                   },
                   child: Container(
@@ -155,7 +211,8 @@ class _SignUpState extends State<SignUp> {
                     ),
                     GestureDetector(
                       onTap: (){
-                        widget.toggle();
+
+                        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => SignIn(widget.toggle)));
                       },
                       child: Container(
                         padding: EdgeInsets.symmetric(vertical: 8),
@@ -177,3 +234,53 @@ class _SignUpState extends State<SignUp> {
     );
   }
 }
+
+class VerifyScreen extends StatefulWidget {
+  @override
+  _VerifyScreenState createState() => _VerifyScreenState();
+}
+
+class _VerifyScreenState extends State<VerifyScreen> {
+  final auth = FirebaseAuth.instance;
+  User user;
+  Timer timer;
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    user = auth.currentUser;
+    user.sendEmailVerification();
+
+    Timer.periodic(Duration(seconds: 5), (timer) {
+      checkEmailVerify();
+    });
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    timer.cancel();
+    super.dispose();
+  }
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: Text("An email has been sent to ${user.email}, please check your inbox or spam to verify your account"),
+      ),
+    );
+  }
+
+  Future<void> checkEmailVerify() async{
+    user = auth.currentUser;
+    await user.reload();
+    if(user.emailVerified){
+      timer.cancel();
+      Navigator.pushReplacement(context, MaterialPageRoute(
+          builder: (context) => Search()));
+    }
+  }
+}
+
+

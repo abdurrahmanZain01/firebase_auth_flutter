@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:new_project/view/login.dart';
 import 'package:new_project/view/signin.dart';
 import 'package:new_project/view/signup.dart';
 
@@ -16,10 +15,11 @@ class _AuthenticateState extends State<Authenticate> {
       showSignIn = !showSignIn;
     });
   }
+
   @override
   Widget build(BuildContext context) {
     if(showSignIn){
-      return Login(toggleView);
+      return SignIn(toggleView);
     }else{
       return SignUp(toggleView);
     }

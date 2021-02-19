@@ -7,8 +7,8 @@
          FlutterApplication and put your custom class here. -->
     <application
         android:name="io.flutter.app.FlutterApplication"
-        android:label="new_project"
-        android:icon="@mipmap/ic_launcher">
+        android:label="Rubik"
+        android:icon="@drawable/favicon">
         <activity
             android:name=".MainActivity"
             android:launchMode="singleTop"
